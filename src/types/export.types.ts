@@ -1,4 +1,3 @@
-
 import { Border, Fill } from "./cell.types";
 
 /**
@@ -273,4 +272,39 @@ export interface Drawing {
   print?: boolean;
   /** Hidden */
   hidden?: boolean;
+}
+
+/**
+ * Section configuration for export (e.g., for splitting sheets into sections)
+ */
+export interface SectionConfig {
+  /** Section title */
+  title?: string;
+  /** Section description */
+  description?: string;
+  /** Range of rows included in this section (e.g., "A1:D10") */
+  range?: string;
+  /** Whether the section is collapsible */
+  collapsible?: boolean;
+  /** Whether the section is initially collapsed */
+  collapsed?: boolean;
+  /** Custom styles for the section */
+  style?: {
+    backgroundColor?: string;
+    fontColor?: string;
+    fontSize?: number;
+    bold?: boolean;
+    italic?: boolean;
+    border?: Border;
+    fill?: Fill;
+  };
+  /** Additional custom options */
+  [key: string]: any;
+}
+
+/**
+ * Export filters
+ */
+export interface ExportFilters {
+  [key: string]: any;
 }
