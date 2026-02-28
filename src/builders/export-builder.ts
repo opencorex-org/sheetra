@@ -4,6 +4,7 @@ import { Worksheet } from '../core/worksheet';
 // import { Cell } from '../core/cell';
 import { StyleBuilder } from '../core/styles';
 import { SectionConfig, ExportOptions } from '../types';
+import { ExcelWriter, CSVWriter, JSONWriter } from '../writers';
 
 export class ExportBuilder {
   private workbook: Workbook;
@@ -168,8 +169,31 @@ export class ExportBuilder {
     return this.workbook.export(options);
   }
 
-  download(options: ExportOptions): void {
-    this.workbook.download(options);
+  download(options: ExportOptions = {}) {
+    const filename = options.filename || 'export.xlsx';
+    const format = options.format || (
+      filename.endsWith('.csv') ? 'csv' :
+      filename.endsWith('.json') ? 'json' :
+      'xlsx'
+    );
+    let writer;
+    if (format === 'xlsx') writer = ExcelWriter;
+    else if (format === 'csv') writer = CSVWriter;
+    else if (format === 'json') writer = JSONWriter;
+    else throw new Error('Unsupported format');
+
+    writer.write(this.workbook, options).then((blob: Blob | MediaSource) => {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => {
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }, 100);
+    });
   }
 
   static create(sheetName?: string): ExportBuilder {

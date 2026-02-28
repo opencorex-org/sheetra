@@ -4,9 +4,10 @@ import { Row } from '../core/row';
 import { Cell } from '../core/cell';
 import { ExportOptions } from '../types';
 import { DateFormatter } from '../formatters/date-formatter';
+import { CSVWriter, JSONWriter } from '../writers';
 
 export class ExcelWriter {
-    static async write(workbook: Workbook, _options: ExportOptions): Promise<Blob> {
+    static async write(workbook: Workbook, options: ExportOptions): Promise<Blob> {
         const data = this.generateExcelData(workbook);
         const buffer = this.createExcelFile(data);
         const uint8Buffer = buffer instanceof Uint8Array ? buffer : new Uint8Array(buffer);
@@ -114,5 +115,36 @@ export class ExcelWriter {
         xml += '</workbook>';
 
         return xml;
+    }
+}
+
+export class ExportBuilder {
+    constructor(private workbook: Workbook) {}
+
+    download(options: ExportOptions = {}) {
+        const filename = options.filename || 'export.xlsx';
+        const format = options.format || (
+            filename.endsWith('.csv') ? 'csv' :
+            filename.endsWith('.json') ? 'json' :
+            'xlsx'
+        );
+        let writer;
+        if (format === 'xlsx') writer = ExcelWriter;
+        else if (format === 'csv') writer = CSVWriter;
+        else if (format === 'json') writer = JSONWriter;
+        else throw new Error('Unsupported format');
+
+        writer.write(this.workbook, options).then((blob: Blob | MediaSource) => {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            setTimeout(() => {
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }, 100);
+        });
     }
 }
