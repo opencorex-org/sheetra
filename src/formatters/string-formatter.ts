@@ -755,13 +755,13 @@ export class TemplateFormatter {
    */
   static conditional(template: string, data: Record<string, any>): string {
     // Simple if statements
-    let result = template.replace(/\{\{#if ([^}]+)\}\}([\s\S]*?)\{\{\/if\}\}/g, (match, condition, content) => {
+    let result = template.replace(/\{\{#if ([^}]+)\}\}([\s\S]*?)\{\{\/if\}\}/g, (_unused, condition, content) => {
       const value = this.evaluateExpression(condition, data);
       return value ? content : '';
     });
 
     // If-else statements
-    result = result.replace(/\{\{#if ([^}]+)\}\}([\s\S]*?)\{\{#else\}\}([\s\S]*?)\{\{\/if\}\}/g, (match, condition, ifContent, elseContent) => {
+    result = result.replace(/\{\{#if ([^}]+)\}\}([\s\S]*?)\{\{#else\}\}([\s\S]*?)\{\{\/if\}\}/g, (_unused, condition, ifContent, elseContent) => {
       const value = this.evaluateExpression(condition, data);
       return value ? ifContent : elseContent;
     });
@@ -773,7 +773,7 @@ export class TemplateFormatter {
    * Template with loops
    */
   static loop(template: string, data: Record<string, any>): string {
-    return template.replace(/\{\{#each ([^}]+) as ([^}]+)\}\}([\s\S]*?)\{\{\/each\}\}/g, (match, arrayPath, itemName, content) => {
+    return template.replace(/\{\{#each ([^}]+) as ([^}]+)\}\}([\s\S]*?)\{\{\/each\}\}/g, (_unused, arrayPath, itemName, content) => {
       const array = arrayPath.split('.').reduce((obj: any, prop: string) => obj?.[prop], data);
       
       if (!Array.isArray(array)) {

@@ -1,10 +1,10 @@
 import { Workbook } from '../core/workbook';
 import { Worksheet } from '../core/worksheet';
-import { Row } from '../core/row';
+// import { Row } from '../core/row';
 import { ExportOptions } from '../types';
 
 export class JSONWriter {
-  static async write(workbook: Workbook, options: ExportOptions): Promise<Blob> {
+  static async write(workbook: Workbook, _options: ExportOptions): Promise<Blob> {
     const sheets = workbook['sheets'];
     const jsonData = this.generateJSONData(sheets[0]); // Use first sheet for JSON
     
