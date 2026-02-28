@@ -1,0 +1,42 @@
+name: Tag Release from package.json
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  tag:
+    if: github.repository_owner == 'opencorex-org'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Get version from package.json
+        id: pkg
+        run: echo "VERSION=v$(node -p \"require('./package.json').version\")" >> $GITHUB_ENV
+
+      - name: Check if tag exists
+        id: check_tag
+        run: |
+          if git rev-parse "$VERSION" >/dev/null 2>&1; then
+            echo "Tag $VERSION already exists."
+            echo "EXISTS=true" >> $GITHUB_ENV
+          else
+            echo "Tag $VERSION does not exist."
+            echo "EXISTS=false" >> $GITHUB_ENV
+          fi
+
+      - name: Create and push tag
+        if: env.EXISTS == 'false'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag $VERSION
+          git push origin $VERSION
