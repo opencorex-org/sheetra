@@ -13,30 +13,31 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      # Install pnpm properly
+      - uses: pnpm/action-setup@v3
+        with:
+          version: 8
+
+      # Setup Node with pnpm cache
+      - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: 'pnpm'
 
-      - name: Install pnpm
-        run: npm install -g pnpm
-
-      # Install all workspace dependencies
+      # Install workspace deps
       - name: Install dependencies
         run: pnpm install
 
-      # Build ONLY the demo app
+      # Build demo only
       - name: Build demo
         run: |
           cd sheetra-demo
           pnpm build
 
-      # Deploy demo dist folder
-      - name: Deploy to GitHub Pages
+      # Deploy
+      - name: Deploy
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
