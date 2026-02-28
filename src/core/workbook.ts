@@ -1,4 +1,4 @@
-import { WorkbookData, WorksheetData, ExportOptions } from '../types';
+import { WorkbookData, ExportOptions } from '../types';
 import { Worksheet } from './worksheet';
 import { ExcelWriter } from '../writers/excel-writer';
 import { CSVWriter } from '../writers/csv-writer';

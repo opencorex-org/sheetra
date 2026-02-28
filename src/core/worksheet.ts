@@ -1,7 +1,7 @@
 import { 
   WorksheetData, 
-  RowData, 
-  ColumnData, 
+//   RowData, 
+//   ColumnData, 
   CellData, 
   MergeCell,
   FreezePane,
