@@ -77,11 +77,10 @@ export class StringFormatter {
   /**
    * Format a string with options
    */
-  static format(value: any, options?: StringFormatOptions): string {
+  static format(value: unknown, options?: StringFormatOptions): string {
     if (value === null || value === undefined) {
       return '';
     }
-
     let str = String(value);
 
     if (!options) {
@@ -218,10 +217,12 @@ export class StringFormatter {
         return padding + str;
       case 'right':
         return str + padding;
-      case 'both':
+      case 'both': {
+        // Wrap the block in curly braces to allow variable declarations
         const leftPad = Math.floor(padding.length / 2);
         const rightPad = padding.length - leftPad;
         return char.repeat(leftPad) + str + char.repeat(rightPad);
+      }
       default:
         return str;
     }
@@ -940,9 +941,11 @@ export class DurationFormatter {
         case 'h':
           total += value * 3600000;
           break;
-        case 'm':
+        case 'm': {
+          // Wrap this block in curly braces to allow variable declarations
           total += value * 60000;
           break;
+        }
         case 's':
           total += value * 1000;
           break;

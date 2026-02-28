@@ -561,17 +561,19 @@ export class SectionBuilder {
         case 'day':
           key = format || date.toISOString().split('T')[0];
           break;
-        case 'week':
+        case 'week': {
           const week = this.getWeekNumber(date);
           key = format || `${date.getFullYear()}-W${week}`;
           break;
+        }
         case 'month':
           key = format || `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
           break;
-        case 'quarter':
+        case 'quarter': {
           const quarter = Math.floor(date.getMonth() / 3) + 1;
           key = format || `${date.getFullYear()}-Q${quarter}`;
           break;
+        }
         case 'year':
           key = format || String(date.getFullYear());
           break;
@@ -738,7 +740,7 @@ class Section {
       }
 
       // Add data rows
-      this.config.data.forEach((item: {}) => {
+      this.config.data.forEach((item: Record<string, unknown>) => {
         const dataRow = this.worksheet.createRow();
         dataRow.setOutlineLevel(this.config.level + 1);
         

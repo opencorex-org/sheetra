@@ -56,16 +56,18 @@ export class Cell {
     }
 
     switch (this.type) {
-      case 'date':
+      case 'date': {
         const dateFormat = typeof this.style?.numberFormat === 'string'
           ? this.style.numberFormat
-          : (this.style?.numberFormat as any)?.format;
+          : (this.style?.numberFormat as { format?: string } | undefined)?.format;
         return DateFormatter.format(this.value, dateFormat);
-      case 'number':
+      }
+      case 'number': {
         const numberFormat = typeof this.style?.numberFormat === 'string'
           ? this.style.numberFormat
-          : (this.style?.numberFormat as any)?.format;
+          : (this.style?.numberFormat as { format?: string } | undefined)?.format;
         return NumberFormatter.format(this.value, numberFormat);
+      }
       case 'boolean':
         return this.value ? 'TRUE' : 'FALSE';
       case 'formula':
