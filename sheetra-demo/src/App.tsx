@@ -24,6 +24,16 @@ function App() {
     builder.download({ filename: 'users.csv', format: 'csv' });
   };
 
+  const handleSimpleExportXlsx = () => {
+    const builder = ExportBuilder.create('Users')
+      .addHeaderRow(['Name', 'Age'])
+      .addDataRows([
+        ['John', 30],
+        ['Jane', 25]
+      ]);
+    builder.download({ filename: 'users.xlsx', format: 'xlsx' });
+  };
+
   const handleAdvancedExportCsv = () => {
     ExportBuilder.create('Inventory')
       .addSection({ name: 'Parts' })
@@ -33,6 +43,17 @@ function App() {
       .addHeaderRow(['Serial Number', 'Part Number', 'Status', 'Location'])
       .addDataRows(instances.map(i => [i.serial_number, i.part_number, i.status, i.location]))
       .download({ filename: 'inventory.csv', format: 'csv' });
+  };
+
+  const handleAdvancedExportXlsx = () => {
+    ExportBuilder.create('Inventory')
+      .addSection({ name: 'Parts' })
+      .addHeaderRow(['Part Number', 'Part Name', 'Current Stock'])
+      .addDataRows(parts.map(p => [p.part_number, p.part_name, p.current_stock]))
+      .addSection({ name: 'Instances' })
+      .addHeaderRow(['Serial Number', 'Part Number', 'Status', 'Location'])
+      .addDataRows(instances.map(i => [i.serial_number, i.part_number, i.status, i.location]))
+      .download({ filename: 'inventory.xlsx', format: 'xlsx' });
   };
 
   return (
@@ -53,7 +74,9 @@ function App() {
       </h1>
       <div style={{ marginBottom: 32 }}>
         <button onClick={handleSimpleExportCsv} style={classicButtonStyle}>Export Users (CSV)</button>
+        <button onClick={handleSimpleExportXlsx} style={{ ...classicButtonStyle, marginLeft: 12 }}>Export Users (XLSX)</button>
         <button onClick={handleAdvancedExportCsv} style={{ ...classicButtonStyle, marginLeft: 12 }}>Export Inventory (CSV)</button>
+        <button onClick={handleAdvancedExportXlsx} style={{ ...classicButtonStyle, marginLeft: 12 }}>Export Inventory (XLSX)</button>
       </div>
       <div style={{ display: 'flex', gap: 48, flexWrap: 'wrap', width: '100%' }}>
         <div>
