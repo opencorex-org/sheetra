@@ -16,20 +16,26 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
+      - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: 20
+          cache: 'pnpm'
 
       - name: Install pnpm
         run: npm install -g pnpm
 
+      # Install all workspace dependencies
       - name: Install dependencies
         run: pnpm install
 
-      - name: Build project
-        run: pnpm build
+      # Build ONLY the demo app
+      - name: Build demo
+        run: |
+          cd sheetra-demo
+          pnpm build
 
+      # Deploy demo dist folder
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
