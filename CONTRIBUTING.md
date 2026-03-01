@@ -4,19 +4,6 @@ Thank you for considering contributing to Sheetra! We welcome contributions from
 
 ---
 
-## Table of Contents
-1. [Code of Conduct](#code-of-conduct)
-2. [How Can I Contribute?](#how-can-i-contribute)
-   - [Reporting Bugs](#reporting-bugs)
-   - [Suggesting Features](#suggesting-features)
-   - [Submitting Code Changes](#submitting-code-changes)
-3. [Development Workflow](#development-workflow)
-4. [Style Guidelines](#style-guidelines)
-5. [Commit Message Guidelines](#commit-message-guidelines)
-6. [License](#license)
-
----
-
 ## Code of Conduct
 By participating in this project, you agree to abide by our [Code of Conduct](CODE_OF_CONDUCT.md). Please ensure that your interactions are respectful and inclusive.
 
@@ -25,14 +12,14 @@ By participating in this project, you agree to abide by our [Code of Conduct](CO
 ## How Can I Contribute?
 
 ### Reporting Bugs
-If you find a bug, please create an issue in the [GitHub repository](https://github.com/your-repo/sheetra/issues) with the following details:
+If you find a bug, please create an issue in the [GitHub repository](https://github.com/opencorex-org/sheetra/issues) with the following details:
 - A clear and descriptive title.
 - Steps to reproduce the issue.
 - Expected and actual behavior.
 - Screenshots or logs, if applicable.
 
 ### Suggesting Features
-We welcome feature requests! To suggest a feature, open an issue in the [GitHub repository](https://github.com/your-repo/sheetra/issues) and include:
+We welcome feature requests! To suggest a feature, open an issue in the [GitHub repository](https://github.com/opencorex-org/sheetra/issues) and include:
 - A detailed description of the feature.
 - The problem it solves or the use case.
 - Any examples or references.
@@ -101,7 +88,7 @@ We follow the [Conventional Commits](https://www.conventionalcommits.org/) speci
 ---
 
 ## License
-By contributing, you agree that your contributions will be licensed under the [Apache 2.0 License](../LICENSE).
+By contributing, you agree that your contributions will be licensed under the [MIT License](../LICENSE).
 
 ---
 

@@ -4,14 +4,91 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sheetra Documentation</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            background-color: #f9f9f9;
+            color: #333;
+        }
+        header {
+            background: #007BFF;
+            color: #fff;
+            padding: 20px;
+            text-align: center;
+        }
+        main {
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        h1, h2 {
+            color: #007BFF;
+        }
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+        ul li {
+            margin: 10px 0;
+        }
+        ul li a {
+            text-decoration: none;
+            color: #007BFF;
+        }
+        ul li a:hover {
+            text-decoration: underline;
+        }
+        footer {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 0.9em;
+            color: #666;
+        }
+    </style>
 </head>
 <body>
-    <h1>Welcome to the Sheetra Documentation</h1>
-    <p>Explore the following guides:</p>
-    <ul>
-        <li><a href="CONTRIBUTING.md">Contributing</a></li>
-        <li><a href="EXAMPLES.md">Examples</a></li>
-        <li><a href="GETTING_STARTED.md">Getting Started</a></li>
-    </ul>
+    <header>
+        <h1>Welcome to the Sheetra Documentation</h1>
+        f<p>Your one-stop guide to using Sheetra effectively</p>
+    </header>
+    <main>
+        <h2>Explore the Documentation</h2>
+        <ul>
+            <li><a href="CONTRIBUTING.md">Contributing Guide</a> - Learn how to contribute to the project.</li>
+            <li><a href="EXAMPLES.md">Examples</a> - Explore practical examples of using Sheetra.</li>
+            <li><a href="GETTING_STARTED.md">Getting Started</a> - A step-by-step guide to using Sheetra.</li>
+            <li><a href="csv-guide.html">CSV Documentation</a> - Learn how to work with CSV files using Sheetra.</li>
+        </ul>
+
+        <h2>Additional Resources</h2>
+        <ul>
+            <li><a href="https://github.com/opencorex-org/sheetra">GitHub Repository</a> - View the source code and open issues.</li>
+            <li><a href="https://www.npmjs.com/package/sheetra">NPM Package</a> - Install Sheetra via npm.</li>
+            <li><a href="https://codecov.io/gh/opencorex-org/sheetra">Code Coverage</a> - View the test coverage report.</li>
+        </ul>
+
+        <h2>About Sheetra</h2>
+        <p>Sheetra is a zero-dependency library for exporting data to Excel, CSV, and JSON formats. It provides a clean, fluent API for creating complex spreadsheets with styles, outlines, and sections. Whether you're working in the browser or Node.js, Sheetra has you covered.</p>
+
+        <h2>Features</h2>
+        <ul>
+            <li>Zero Dependencies - Pure TypeScript/JavaScript implementation</li>
+            <li>Multiple Formats - Export to XLSX, CSV, JSON</li>
+            <li>Styling Support - Bold, colors, borders, alignment</li>
+            <li>Outlines & Groups - Create collapsible sections</li>
+            <li>Fluent API - Chain methods for easy construction</li>
+            <li>TypeScript - Full type support</li>
+            <li>Browser & Node - Works in both environments</li>
+        </ul>
+    </main>
+    <footer>
+        <p>&copy; 2026 Sheetra. All rights reserved.</p>
+    </footer>
 </body>
 </html>
