@@ -4,8 +4,7 @@ on:
   push:
     tags:
       - 'v*.*.*'
-    branches:
-      - main
+  workflow_dispatch:
 
 jobs:
   publish:
@@ -28,21 +27,32 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
+      - name: Get package.json version
+        id: pkg_version
+        run: |
+          PKG_VERSION=$(node -p "require('./package.json').version")
+          echo "PKG_VERSION=$PKG_VERSION" >> $GITHUB_ENV
+
       - name: Get current npm version
         id: npm_version
         run: |
-          CURRENT_VERSION=$(npm show sheetra version)
+          CURRENT_VERSION=$(npm show sheetra version 2>/dev/null || echo "0.0.0")
           echo "CURRENT_VERSION=$CURRENT_VERSION" >> $GITHUB_ENV
 
       - name: Compare versions
         id: compare_versions
         run: |
-          TAG_VERSION=${{ github.ref_name }}
-          TAG_VERSION=${TAG_VERSION#v} # Remove 'v' prefix
-          if [ "$(printf '%s\n' "$TAG_VERSION" "$CURRENT_VERSION" | sort -V | head -n1)" != "$CURRENT_VERSION" ]; then
-            echo "NEW_VERSION=true" >> $GITHUB_ENV
+          if [ "$PKG_VERSION" != "$CURRENT_VERSION" ]; then
+            if [ "$(printf '%s\n' "$PKG_VERSION" "$CURRENT_VERSION" | sort -V | tail -n1)" == "$PKG_VERSION" ]; then
+              echo "NEW_VERSION=true" >> $GITHUB_ENV
+              echo "Publishing version $PKG_VERSION (current npm version: $CURRENT_VERSION)"
+            else
+              echo "NEW_VERSION=false" >> $GITHUB_ENV
+              echo "Package version $PKG_VERSION is not newer than npm version $CURRENT_VERSION"
+            fi
           else
             echo "NEW_VERSION=false" >> $GITHUB_ENV
+            echo "Version $PKG_VERSION already published"
           fi
 
       - name: Build package
@@ -51,6 +61,6 @@ jobs:
 
       - name: Publish to npm
         if: env.NEW_VERSION == 'true'
-        run: pnpm publish --access public
+        run: pnpm publish --access public --no-git-checks
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

@@ -8,7 +8,6 @@
 [![npm downloads](https://img.shields.io/npm/dm/sheetra.svg)](https://www.npmjs.com/package/sheetra)
 [![GitHub stars](https://img.shields.io/github/stars/opencorex-org/sheetra?style=social)](https://github.com/opencorex-org/sheetra)
 [![GitHub issues](https://img.shields.io/github/issues/opencorex-org/sheetra)](https://github.com/opencorex-org/sheetra/issues)
-[![Version](https://img.shields.io/badge/version-1.0.0-blue)](https://github.com/opencorex-org/sheetra/releases)
 
 Sheetra is a powerful, zero-dependency library for exporting data to Excel (XLSX), CSV, and JSON formats. It provides a clean, fluent API for creating complex spreadsheets with styles, outlines, and sections.
 
