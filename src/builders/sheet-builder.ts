@@ -73,6 +73,30 @@ export class SheetBuilder {
   }
 
   /**
+   * Set the width of a specific column
+   * @param colIndex Column index
+   * @param width Width to set
+   */
+  setColumnWidth(colIndex: number, width: number): this {
+    const column = this.getOrCreateColumn(colIndex);
+    column.setWidth(width);
+    return this;
+  }
+
+  /**
+   * Set the height of a specific row
+   * @param rowIndex Row index
+   * @param height Height to set
+   */
+  setRowHeight(rowIndex: number, height: number): this {
+    const row = this.worksheet.getRow(rowIndex);
+    if (row) {
+      row.setHeight(height);
+    }
+    return this;
+  }
+
+  /**
    * Add a title row
    * @param title Title text
    * @param colSpan Number of columns to span

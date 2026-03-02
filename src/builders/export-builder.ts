@@ -110,6 +110,70 @@ export class ExportBuilder {
     return this;
   }
 
+  /**
+   * Merge cells in the current worksheet
+   * @param startRow Start row index (0-based)
+   * @param startCol Start column index (0-based)
+   * @param endRow End row index (0-based)
+   * @param endCol End column index (0-based)
+   */
+  mergeCells(startRow: number, startCol: number, endRow: number, endCol: number): this {
+    this.currentSheet.mergeCells(startRow, startCol, endRow, endCol);
+    return this;
+  }
+
+  /**
+   * Set alignment for a specific cell
+   * @param row Row index (0-based)
+   * @param col Column index (0-based)
+   * @param horizontal Horizontal alignment
+   * @param vertical Vertical alignment (optional)
+   */
+  setAlignment(
+    row: number,
+    col: number,
+    horizontal: 'left' | 'center' | 'right',
+    vertical?: 'top' | 'middle' | 'bottom'
+  ): this {
+    const rowObj = this.currentSheet.getRow(row);
+    if (rowObj) {
+      const cells = rowObj.getCells();
+      if (cells[col]) {
+        const style = StyleBuilder.create().align(horizontal);
+        if (vertical) {
+          style.verticalAlign(vertical);
+        }
+        cells[col].setStyle(style.build());
+      }
+    }
+    return this;
+  }
+
+  /**
+   * Set alignment for a range of cells
+   * @param startRow Start row index (0-based)
+   * @param startCol Start column index (0-based)
+   * @param endRow End row index (0-based)
+   * @param endCol End column index (0-based)
+   * @param horizontal Horizontal alignment
+   * @param vertical Vertical alignment (optional)
+   */
+  setRangeAlignment(
+    startRow: number,
+    startCol: number,
+    endRow: number,
+    endCol: number,
+    horizontal: 'left' | 'center' | 'right',
+    vertical?: 'top' | 'middle' | 'bottom'
+  ): this {
+    for (let r = startRow; r <= endRow; r++) {
+      for (let c = startCol; c <= endCol; c++) {
+        this.setAlignment(r, c, horizontal, vertical);
+      }
+    }
+    return this;
+  }
+
   autoSizeColumns(): this {
     const rows = this.currentSheet.getRows();
     const maxLengths: number[] = [];

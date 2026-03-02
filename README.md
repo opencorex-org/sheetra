@@ -13,15 +13,87 @@ Sheetra is a powerful, zero-dependency library for exporting data to Excel (XLSX
 
 ---
 
-## Features
 
-- **Zero Dependencies** – Pure TypeScript/JavaScript implementation
-- **Multiple Formats** – Export to XLSX, CSV, JSON
-- **Styling Support** – Bold, colors, borders, alignment
-- **Outlines & Groups** – Create collapsible sections
-- **Fluent API** – Chain methods for easy construction
-- **TypeScript** – Full type support
-- **Browser & Node** – Works in both environments
+## Example Usage
+
+```ts
+import { ExportBuilder, StyleBuilder } from 'sheetra';
+
+// --- Comprehensive Example: All Features ---
+const users = [
+  { name: 'John Doe', age: 30, email: 'john@example.com', department: 'Engineering' },
+  { name: 'Jane Smith', age: 25, email: 'jane@example.com', department: 'Marketing' },
+];
+const parts = [
+  { part_number: 'P001', part_name: 'Widget', current_stock: 100, price: 29.99 },
+  { part_number: 'P002', part_name: 'Gadget', current_stock: 50, price: 49.99 },
+];
+const salesData = [
+  { product: 'Widget', jan: 1500, feb: 1800, mar: 2100 },
+  { product: 'Gadget', jan: 900, feb: 1100, mar: 1300 },
+];
+
+// Styled header
+const headerStyle = StyleBuilder.create()
+  .bold()
+  .backgroundColor('#4F81BD')
+  .color('#FFFFFF')
+  .align('center')
+  .build();
+
+ExportBuilder.create('All Features Demo')
+  // Set column widths
+  .setColumnWidths([150, 100, 200, 120])
+  // Add styled header row
+  .addHeaderRow(['Name', 'Age', 'Email', 'Department'], headerStyle)
+  // Add data rows
+  .addDataRows(users.map(u => [u.name, u.age, u.email, u.department]))
+  // Add section
+  .addSection({ name: 'Parts', title: 'Parts Inventory' })
+  .addHeaderRow(['Part Number', 'Part Name', 'Stock', 'Price'])
+  .addDataRows(parts.map(p => [p.part_number, p.part_name, p.current_stock, p.price]))
+  // Merge cells for a title
+  .addDataRows([['Monthly Sales Report', '', '', '']])
+  .mergeCells(7, 0, 7, 3)
+  .setAlignment(7, 0, 'center')
+  // Alignment demo
+  .addHeaderRow(['Left', 'Center', 'Right'])
+  .setAlignment(8, 0, 'left')
+  .setAlignment(8, 1, 'center')
+  .setAlignment(8, 2, 'right')
+  .addDataRows([
+    ['Left Text', 'Center Text', 'Right Text'],
+    ['Value 1', 'Value 2', 'Value 3'],
+  ])
+  .setRangeAlignment(9, 0, 10, 0, 'left')
+  .setRangeAlignment(9, 1, 10, 1, 'center')
+  .setRangeAlignment(9, 2, 10, 2, 'right')
+  // Auto-size columns
+  .autoSizeColumns()
+  // Download as XLSX
+  .download({ filename: 'all-features-demo.xlsx', format: 'xlsx' });
+```
+
+This example demonstrates:
+- Column widths and auto-sizing
+- Merged cells for titles
+- Alignment (left, center, right, range)
+- Sections and headers
+- Styled headers with StyleBuilder
+- Data rows and multiple tables
+- XLSX export
+
+See the [sheetra-demo](./sheetra-demo/src/App.tsx) for a full-featured React demo with all features in action.
+  .addDataRows(users.map(u => [u.name, u.age, u.email, u.department]))
+  .download({ filename: 'styled-report.xlsx', format: 'xlsx' });
+```
+
+## Troubleshooting
+
+**Upgrading from previous versions?**
+
+If you previously encountered errors with styled exports (e.g., `SyntaxError: Expected ':' after property name in JSON`), upgrade to the latest version. Style and alignment handling is now robust and all edge cases are supported.
+
 
 ---
 
