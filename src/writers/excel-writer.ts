@@ -277,6 +277,7 @@ export class ExcelWriter {
 
     private static generateWorksheet(sheet: Worksheet): string {
         const rows = sheet.getRows();
+        const columns = sheet.getColumns();
         const allStrings = this.collectAllStrings(sheet);
         
         let xml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n';
@@ -285,6 +286,24 @@ export class ExcelWriter {
         // Add sheet dimension
         const dimension = this.getSheetDimension(rows);
         xml += `<dimension ref="${dimension}"/>`;
+        
+        // Add column widths if defined
+        if (columns.length > 0) {
+            xml += '<cols>';
+            columns.forEach((col, index) => {
+                const colData = col.toData();
+                if (colData.width !== undefined && colData.width > 0) {
+                    // Excel width is in character units, convert from pixels: width / 7
+                    const excelWidth = colData.width / 7;
+                    xml += `<col min="${index + 1}" max="${index + 1}" width="${excelWidth}" customWidth="1"`;
+                    if (colData.hidden) {
+                        xml += ' hidden="1"';
+                    }
+                    xml += '/>'; 
+                }
+            });
+            xml += '</cols>';
+        }
         
         xml += '<sheetData>';
         

@@ -17,6 +17,7 @@ function App() {
   const handleSimpleExportCsv = () => {
     const builder = ExportBuilder.create('Users')
       .addHeaderRow(['Name', 'Age'])
+      .setColumnWidths([150, 80])
       .addDataRows([
         ['John', 30],
         ['Jane', 25]
@@ -27,9 +28,10 @@ function App() {
   const handleSimpleExportXlsx = () => {
     const builder = ExportBuilder.create('Users')
       .addHeaderRow(['Name', 'Age'])
+      .setColumnWidths([550, 80])
       .addDataRows([
-        ['John', 30],
-        ['Jane', 25]
+        ['John'],
+        ['Jane']
       ]);
     builder.download({ filename: 'users.xlsx', format: 'xlsx' });
   };
