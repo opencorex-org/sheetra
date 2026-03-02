@@ -2,8 +2,18 @@ import { Workbook } from '../core/workbook';
 import { Worksheet } from '../core/worksheet';
 import { Row } from '../core/row';
 import { Cell } from '../core/cell';
-import { ExportOptions } from '../types';
+import { ExportOptions, CellStyle } from '../types';
 import { DateFormatter } from '../formatters/date-formatter';
+
+/**
+ * Style registry to track unique styles and their indices
+ */
+interface StyleRegistry {
+    fonts: Map<string, number>;
+    fills: Map<string, number>;
+    borders: Map<string, number>;
+    cellXfs: Map<string, number>;
+}
 
 /**
  * Minimal ZIP file creator for XLSX generation (no external dependencies)
@@ -153,23 +163,142 @@ export class ExcelWriter {
             sheet.getName() || `Sheet${index + 1}`
         );
 
+        // Collect all styles from sheets
+        const styleRegistry = this.collectStyles(sheets);
+
         // Add required XLSX files
         zip.addFile('[Content_Types].xml', this.generateContentTypes(sheetNames));
         zip.addFile('_rels/.rels', this.generateRels());
         zip.addFile('xl/workbook.xml', this.generateWorkbook(sheetNames));
         zip.addFile('xl/_rels/workbook.xml.rels', this.generateWorkbookRels(sheetNames));
-        zip.addFile('xl/styles.xml', this.generateStyles());
+        zip.addFile('xl/styles.xml', this.generateStyles(styleRegistry));
         zip.addFile('xl/sharedStrings.xml', this.generateSharedStrings(sheets));
 
         // Add each worksheet
         sheets.forEach((sheet, index) => {
-            zip.addFile(`xl/worksheets/sheet${index + 1}.xml`, this.generateWorksheet(sheet));
+            zip.addFile(`xl/worksheets/sheet${index + 1}.xml`, this.generateWorksheet(sheet, styleRegistry));
         });
 
         const buffer = zip.generate();
         return new Blob([buffer.buffer as ArrayBuffer], { 
             type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
         });
+    }
+
+    /**
+     * Collect all unique styles from sheets
+     */
+    private static collectStyles(sheets: Worksheet[]): StyleRegistry {
+        const registry: StyleRegistry = {
+            fonts: new Map(),
+            fills: new Map(),
+            borders: new Map(),
+            cellXfs: new Map()
+        };
+
+        // Add default font (Calibri 11)
+        const defaultFont = this.serializeFont({});
+        registry.fonts.set(defaultFont, 0);
+
+        // Add required fills (none and gray125)
+        registry.fills.set('none', 0);
+        registry.fills.set('gray125', 1);
+
+        // Add default border
+        registry.borders.set('none', 0);
+
+        // Add default cellXf (no style)
+        registry.cellXfs.set('default', 0);
+
+        // Collect styles from all cells
+        sheets.forEach((sheet) => {
+            const rows = sheet.getRows();
+            rows.forEach((row: Row) => {
+                row.getCells().forEach((cell: Cell) => {
+                    const cellData = cell.toData();
+                    if (cellData.style) {
+                        this.registerStyle(cellData.style, registry);
+                    }
+                });
+            });
+        });
+
+        return registry;
+    }
+
+    /**
+     * Register a style and get its cellXf index
+     */
+    private static registerStyle(style: CellStyle, registry: StyleRegistry): number {
+        // Serialize and register font
+        const fontKey = this.serializeFont(style);
+        if (!registry.fonts.has(fontKey)) {
+            registry.fonts.set(fontKey, registry.fonts.size);
+        }
+
+        // Serialize and register fill
+        const fillKey = this.serializeFill(style);
+        if (fillKey !== 'none' && !registry.fills.has(fillKey)) {
+            registry.fills.set(fillKey, registry.fills.size);
+        }
+
+        // Serialize and register border
+        const borderKey = this.serializeBorder(style);
+        if (borderKey !== 'none' && !registry.borders.has(borderKey)) {
+            registry.borders.set(borderKey, registry.borders.size);
+        }
+
+        // Create cellXf key
+        const fontIndex = registry.fonts.get(fontKey) ?? 0;
+        const fillIndex = registry.fills.get(fillKey) ?? 0;
+        const borderIndex = registry.borders.get(borderKey) ?? 0;
+        let alignment = this.serializeAlignment(style);
+        if (!alignment) alignment = '{}';
+        const xfKey = `f${fontIndex}:l${fillIndex}:b${borderIndex}:a${alignment}`;
+        
+        if (!registry.cellXfs.has(xfKey)) {
+            registry.cellXfs.set(xfKey, registry.cellXfs.size);
+        }
+
+        return registry.cellXfs.get(xfKey) ?? 0;
+    }
+
+    /**
+     * Get style index for a cell style
+     */
+    private static getStyleIndex(style: CellStyle | undefined, registry: StyleRegistry): number {
+        if (!style) return 0;
+        return this.registerStyle(style, registry);
+    }
+
+    private static serializeFont(style: CellStyle): string {
+        const bold = style.bold || style.font?.bold;
+        const italic = style.italic || style.font?.italic;
+        const underline = style.underline || style.font?.underline;
+        const color = style.color || style.font?.color;
+        const size = style.fontSize || style.font?.size || 11;
+        const name = style.fontFamily || style.font?.name || 'Calibri';
+        
+        return JSON.stringify({ bold, italic, underline, color, size, name });
+    }
+
+    private static serializeFill(style: CellStyle): string {
+        const bgColor = style.backgroundColor || style.fill?.fgColor;
+        if (!bgColor) return 'none';
+        return JSON.stringify({ bgColor });
+    }
+
+    private static serializeBorder(style: CellStyle): string {
+        if (!style.border && !style.borderAll) return 'none';
+        return JSON.stringify({ border: style.border, borderAll: style.borderAll });
+    }
+
+    private static serializeAlignment(style: CellStyle): string {
+        const h = style.alignment;
+        const v = style.verticalAlignment;
+        const wrap = style.wrapText;
+        if (!h && !v && !wrap) return '';
+        return JSON.stringify({ h, v, wrap });
     }
 
     private static escapeXml(str: string): string {
@@ -235,16 +364,143 @@ export class ExcelWriter {
         return xml;
     }
 
-    private static generateStyles(): string {
+    private static generateStyles(registry: StyleRegistry): string {
         let xml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n';
         xml += '<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">';
-        xml += '<fonts count="1"><font><sz val="11"/><name val="Calibri"/></font></fonts>';
-        xml += '<fills count="2"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill></fills>';
-        xml += '<borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders>';
+        
+        // Generate fonts
+        xml += `<fonts count="${registry.fonts.size}">`;
+        const fontEntries = Array.from(registry.fonts.entries()).sort((a, b) => a[1] - b[1]);
+        for (const [fontKey] of fontEntries) {
+            const font = JSON.parse(fontKey);
+            xml += '<font>';
+            if (font.bold) xml += '<b/>';
+            if (font.italic) xml += '<i/>';
+            if (font.underline) xml += '<u/>';
+            xml += `<sz val="${font.size || 11}"/>`;
+            if (font.color) {
+                const colorHex = this.colorToARGB(font.color);
+                xml += `<color rgb="${colorHex}"/>`;
+            }
+            xml += `<name val="${font.name || 'Calibri'}"/>`;
+            xml += '</font>';
+        }
+        xml += '</fonts>';
+
+        // Generate fills
+        xml += `<fills count="${registry.fills.size}">`;
+        const fillEntries = Array.from(registry.fills.entries()).sort((a, b) => a[1] - b[1]);
+        for (const [fillKey] of fillEntries) {
+            if (fillKey === 'none') {
+                xml += '<fill><patternFill patternType="none"/></fill>';
+            } else if (fillKey === 'gray125') {
+                xml += '<fill><patternFill patternType="gray125"/></fill>';
+            } else {
+                const fill = JSON.parse(fillKey);
+                const colorHex = this.colorToARGB(fill.bgColor);
+                xml += `<fill><patternFill patternType="solid"><fgColor rgb="${colorHex}"/><bgColor indexed="64"/></patternFill></fill>`;
+            }
+        }
+        xml += '</fills>';
+
+        // Generate borders
+        xml += `<borders count="${registry.borders.size}">`;
+        const borderEntries = Array.from(registry.borders.entries()).sort((a, b) => a[1] - b[1]);
+        for (const [borderKey] of borderEntries) {
+            if (borderKey === 'none') {
+                xml += '<border><left/><right/><top/><bottom/><diagonal/></border>';
+            } else {
+                const borderData = JSON.parse(borderKey);
+                xml += '<border>';
+                
+                if (borderData.borderAll) {
+                    const style = borderData.borderAll.style || 'thin';
+                    const color = borderData.borderAll.color ? this.colorToARGB(borderData.borderAll.color) : 'FF000000';
+                    xml += `<left style="${style}"><color rgb="${color}"/></left>`;
+                    xml += `<right style="${style}"><color rgb="${color}"/></right>`;
+                    xml += `<top style="${style}"><color rgb="${color}"/></top>`;
+                    xml += `<bottom style="${style}"><color rgb="${color}"/></bottom>`;
+                } else if (borderData.border) {
+                    const b = borderData.border;
+                    xml += this.generateBorderEdge('left', b.left);
+                    xml += this.generateBorderEdge('right', b.right);
+                    xml += this.generateBorderEdge('top', b.top);
+                    xml += this.generateBorderEdge('bottom', b.bottom);
+                }
+                
+                xml += '<diagonal/></border>';
+            }
+        }
+        xml += '</borders>';
+
+        // Generate cellStyleXfs (base styles)
         xml += '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>';
-        xml += '<cellXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/></cellXfs>';
+
+        // Generate cellXfs (cell formats)
+        xml += `<cellXfs count="${registry.cellXfs.size}">`;
+        const xfEntries = Array.from(registry.cellXfs.entries()).sort((a, b) => a[1] - b[1]);
+        for (const [xfKey] of xfEntries) {
+            if (xfKey === 'default') {
+                xml += '<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>';
+            } else {
+                // Parse xf key: f{fontIndex}:l{fillIndex}:b{borderIndex}:a{alignment}
+                const parts = xfKey.split(':');
+                const fontId = parseInt(parts[0].substring(1)) || 0;
+                const fillId = parseInt(parts[1].substring(1)) || 0;
+                const borderId = parseInt(parts[2].substring(1)) || 0;
+                const alignmentJson = parts[3].substring(1);
+
+                let xf = `<xf numFmtId="0" fontId="${fontId}" fillId="${fillId}" borderId="${borderId}" xfId="0"`;
+                if (fontId > 0) xf += ' applyFont="1"';
+                if (fillId > 0) xf += ' applyFill="1"';
+                if (borderId > 0) xf += ' applyBorder="1"';
+
+                let align: any = {};
+                if (alignmentJson && alignmentJson.trim().startsWith('{')) {
+                    try {
+                        align = JSON.parse(alignmentJson);
+                    } catch (e) {
+                        align = {};
+                    }
+                }
+                if (Object.keys(align).length > 0) {
+                    xf += ' applyAlignment="1">';
+                    xf += '<alignment';
+                    if (align.h) xf += ` horizontal="${align.h}"`;
+                    if (align.v) xf += ` vertical="${align.v === 'middle' ? 'center' : align.v}"`;
+                    if (align.wrap) xf += ' wrapText="1"';
+                    xf += '/></xf>';
+                } else {
+                    xf += '/>';
+                }
+                xml += xf;
+            }
+        }
+        xml += '</cellXfs>';
+        
         xml += '</styleSheet>';
         return xml;
+    }
+
+    private static generateBorderEdge(side: string, edge?: { style?: string; color?: string }): string {
+        if (!edge || !edge.style) return `<${side}/>`;
+        const color = edge.color ? this.colorToARGB(edge.color) : 'FF000000';
+        return `<${side} style="${edge.style}"><color rgb="${color}"/></${side}>`;
+    }
+
+    private static colorToARGB(color: string): string {
+        if (!color) return 'FF000000';
+        // Remove # if present
+        let hex = color.replace('#', '').toUpperCase();
+        // Add alpha if not present (6 chars -> 8 chars)
+        if (hex.length === 6) {
+            hex = 'FF' + hex;
+        }
+        // Handle 3 char hex
+        if (hex.length === 3) {
+            hex = 'FF' + hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
+        }
+        return hex;
     }
 
     private static generateSharedStrings(sheets: Worksheet[]): string {
@@ -275,7 +531,7 @@ export class ExcelWriter {
         return xml;
     }
 
-    private static generateWorksheet(sheet: Worksheet): string {
+    private static generateWorksheet(sheet: Worksheet, styleRegistry: StyleRegistry): string {
         const rows = sheet.getRows();
         const columns = sheet.getColumns();
         const allStrings = this.collectAllStrings(sheet);
@@ -315,27 +571,32 @@ export class ExcelWriter {
                 cells.forEach((cell: Cell, colIndex: number) => {
                     const cellData = cell.toData();
                     const cellRef = this.columnToLetter(colIndex + 1) + (rowIndex + 1);
+                    const styleIndex = this.getStyleIndex(cellData.style, styleRegistry);
+                    const styleAttr = styleIndex > 0 ? ` s="${styleIndex}"` : '';
                     
                     if (cellData.formula) {
-                        xml += `<c r="${cellRef}"><f>${this.escapeXml(cellData.formula)}</f></c>`;
+                        xml += `<c r="${cellRef}"${styleAttr}><f>${this.escapeXml(cellData.formula)}</f></c>`;
                     } else if (cellData.value !== null && cellData.value !== undefined && cellData.value !== '') {
                         if (typeof cellData.value === 'number') {
-                            xml += `<c r="${cellRef}"><v>${cellData.value}</v></c>`;
+                            xml += `<c r="${cellRef}"${styleAttr}><v>${cellData.value}</v></c>`;
                         } else if (typeof cellData.value === 'boolean') {
-                            xml += `<c r="${cellRef}" t="b"><v>${cellData.value ? 1 : 0}</v></c>`;
+                            xml += `<c r="${cellRef}"${styleAttr} t="b"><v>${cellData.value ? 1 : 0}</v></c>`;
                         } else if (cellData.type === 'date') {
                             const excelDate = DateFormatter.toExcelDate(cellData.value);
-                            xml += `<c r="${cellRef}"><v>${excelDate}</v></c>`;
+                            xml += `<c r="${cellRef}"${styleAttr}><v>${excelDate}</v></c>`;
                         } else {
                             // String value - use shared string index
                             const stringIndex = allStrings.indexOf(String(cellData.value));
                             if (stringIndex >= 0) {
-                                xml += `<c r="${cellRef}" t="s"><v>${stringIndex}</v></c>`;
+                                xml += `<c r="${cellRef}"${styleAttr} t="s"><v>${stringIndex}</v></c>`;
                             } else {
                                 // Inline string as fallback
-                                xml += `<c r="${cellRef}" t="inlineStr"><is><t>${this.escapeXml(String(cellData.value))}</t></is></c>`;
+                                xml += `<c r="${cellRef}"${styleAttr} t="inlineStr"><is><t>${this.escapeXml(String(cellData.value))}</t></is></c>`;
                             }
                         }
+                    } else if (styleIndex > 0) {
+                        // Empty cell with style
+                        xml += `<c r="${cellRef}"${styleAttr}/>`;
                     }
                 });
                 
@@ -344,6 +605,19 @@ export class ExcelWriter {
         });
         
         xml += '</sheetData>';
+        
+        // Add merged cells if any
+        const sheetData = sheet.toData();
+        if (sheetData.mergeCells && sheetData.mergeCells.length > 0) {
+            xml += '<mergeCells>';
+            sheetData.mergeCells.forEach(merge => {
+                const startRef = this.columnToLetter(merge.startCol + 1) + (merge.startRow + 1);
+                const endRef = this.columnToLetter(merge.endCol + 1) + (merge.endRow + 1);
+                xml += `<mergeCell ref="${startRef}:${endRef}"/>`;
+            });
+            xml += '</mergeCells>';
+        }
+        
         xml += '</worksheet>';
         return xml;
     }
