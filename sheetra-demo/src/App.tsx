@@ -192,10 +192,20 @@ function App() {
       .align('center')
       .build();
 
+    const rowStyle = StyleBuilder.create()
+      .color('#333')
+      .backgroundColor('#e0e0e0')
+      .align('left')
+      .build();
+
     ExportBuilder.create('Styled Report')
       .setColumnWidths([150, 100, 150, 120])
       .addHeaderRow(['Name', 'Age', 'Email', 'Department'], headerStyle)
-      .addDataRows(users.map(u => [u.name, u.age, u.email, u.department]))
+      .addDataRows(
+        users.map(u => [u.name, u.age, u.email, u.department]),
+        undefined,
+        users.map(() => [rowStyle, rowStyle, rowStyle, rowStyle])
+      )
       .download({ filename: 'styled-report.xlsx', format: 'xlsx' });
   };
 

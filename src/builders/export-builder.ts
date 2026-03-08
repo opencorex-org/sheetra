@@ -24,24 +24,45 @@ export class ExportBuilder {
     return this;
   }
 
-  addDataRows(data: any[], fields?: string[]): this {
-    data.forEach(item => {
+  /**
+   * Add multiple data rows to the sheet
+   * @param data Array of row data
+   * @param fields Optional array of field names (for object data)
+   * @param styles Optional array of styles per row or per cell
+   */
+  addDataRows(data: any[], fields?: string[], styles?: (import('../types').CellStyle | import('../types').CellStyle[] | undefined)[]): this {
+    data.forEach((item, rowIdx) => {
       const row = this.currentSheet.createRow();
-      
+      let rowStyle: import('../types').CellStyle | undefined = undefined;
+      let cellStyles: (import('../types').CellStyle | undefined)[] | undefined = undefined;
+      if (styles && styles[rowIdx]) {
+        if (Array.isArray(styles[rowIdx])) {
+          cellStyles = styles[rowIdx] as import('../types').CellStyle[];
+        } else {
+          rowStyle = styles[rowIdx] as import('../types').CellStyle;
+        }
+      }
+
       if (fields && fields.length > 0) {
-        fields.forEach(field => {
+        fields.forEach((field, colIdx) => {
           const value = this.getNestedValue(item, field);
-          row.createCell(value);
+          const style = cellStyles ? cellStyles[colIdx] : rowStyle;
+          row.createCell(value, style);
         });
       } else if (Array.isArray(item)) {
-        item.forEach(value => row.createCell(value));
+        item.forEach((value, colIdx) => {
+          const style = cellStyles ? cellStyles[colIdx] : rowStyle;
+          row.createCell(value, style);
+        });
       } else if (typeof item === 'object') {
-        Object.values(item).forEach(value => row.createCell(value));
+        Object.values(item).forEach((value, colIdx) => {
+          const style = cellStyles ? cellStyles[colIdx] : rowStyle;
+          row.createCell(value, style);
+        });
       } else {
-        row.createCell(item);
+        row.createCell(item, rowStyle);
       }
     });
-    
     return this;
   }
 
